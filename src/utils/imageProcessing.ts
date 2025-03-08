@@ -1,3 +1,4 @@
+import { ProcessingCallback } from "@/types";
 import { pipeline, env } from "@huggingface/transformers";
 
 env.allowLocalModels = false;
@@ -6,7 +7,6 @@ env.useBrowserCache = false;
 const MAX_DIMENSION = 1024;
 
 // Processing callback type
-export type ProcessingCallback = (progress: number) => void;
 
 // Optimized resize function
 const resizeImage = async (
@@ -49,9 +49,8 @@ const applyMask = (
       const maskX = Math.min(Math.floor(x / scaleX), mask.width - 1);
       const maskY = Math.min(Math.floor(y / scaleY), mask.height - 1);
       let maskValue = maskData[maskY * mask.width + maskX];
-
-      // Improved thresholding for a smoother mask
-      const threshold = 0.3; // Increased threshold for better background removal
+      // can be chnage later
+      const threshold = 0.4;
       const softness = 0.25;
 
       maskValue =
@@ -62,7 +61,7 @@ const applyMask = (
           : 0;
 
       const index = (y * width + x) * 4;
-      data[index + 3] = Math.round(255 * (1 - maskValue)); // Apply transparency
+      data[index + 3] = Math.round(255 * (1 - maskValue));
     }
   }
 };

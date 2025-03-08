@@ -7,6 +7,7 @@ import ImagePreview from "@/components/ImagePreview";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { removeBackground, loadImage } from "@/utils/imageProcessing";
 import { Wand2 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 const Index = () => {
   const [originalFile, setOriginalFile] = useState<File | null>(null);
@@ -77,11 +78,11 @@ const Index = () => {
       addProcessingStep("Background removed successfully", "completed");
       toast.success("Background removed successfully");
     } catch (error) {
-      toast.error(
-        `Failed to process image: ${
-          (error as Error).message || "Unknown error"
-        }`
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      toast.error(errorMessage, {
+        duration: 2000,
+      });
       addProcessingStep("Processing failed", "error");
     } finally {
       setIsProcessing(false);
@@ -94,20 +95,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="w-full border-b bg-background/80 backdrop-blur-md">
-        <div className="container flex h-14 items-center justify-between">
-          <h1 className="flex items-center gap-2 text-xl font-semibold">
-            <Wand2 className="h-5 w-5 text-primary" />
-            <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              Background Remover
-            </span>
-          </h1>
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
+        <div className="container flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6">
+          <Logo />
           <ThemeToggle />
         </div>
       </header>
 
-      <main className="flex-1 container py-6">
-        <div className="max-w-5xl mx-auto h-full flex flex-col gap-6">
+      <main className="flex-1 container py-4 sm:py-6 px-3 sm:px-6">
+        <div className="max-w-5xl mx-auto h-full flex flex-col gap-4 sm:gap-6">
           {!originalImageUrl ? (
             <ImageUploader
               onImageUpload={handleImageUpload}
@@ -125,10 +121,14 @@ const Index = () => {
                 onReprocess={handleReprocess}
               />
 
-              <div className="flex items-center justify-center gap-4 mt-6">
+              <div className="flex items-center justify-center gap-4 mt-4 sm:mt-6">
                 {!processedImageUrl && (
-                  <Button onClick={processImage} disabled={isProcessing}>
-                    <Wand2 className="h-4 w-4 mr-2" />
+                  <Button
+                    onClick={processImage}
+                    disabled={isProcessing}
+                    className="text-sm sm:text-base w-full sm:w-auto"
+                  >
+                    <Wand2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                     {isProcessing ? "Processing..." : "Remove Background"}
                   </Button>
                 )}
@@ -137,6 +137,12 @@ const Index = () => {
           )}
         </div>
       </main>
+
+      <footer className="border-t py-3 sm:py-4 mt-auto">
+        <div className="container text-center text-xs sm:text-sm text-muted-foreground px-3 sm:px-6">
+          <p>Powered by CleanCanvas AI</p>
+        </div>
+      </footer>
     </div>
   );
 };

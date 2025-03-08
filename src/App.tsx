@@ -4,7 +4,6 @@ import {
   createRoutesFromElements,
   Route,
 } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/hooks/use-theme";
 import Index from "@/pages/Index";
@@ -22,7 +21,6 @@ const router = createBrowserRouter(
 
 const App = () => (
   <ThemeProvider defaultTheme="system">
-    <Toaster />
     <Sonner />
     <RouterProvider router={router} />
   </ThemeProvider>

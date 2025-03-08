@@ -56,25 +56,10 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer components {
-  .glassmorphism {
-    @apply bg-background/70 backdrop-blur-lg border border-muted/50 shadow-sm;
-    @apply bg-background/95;
-    @apply border border-border/50;
-    @apply shadow-lg;
-  }
-
-  .processing-loader {
-    @apply absolute inset-0 z-10;
-    @apply flex flex-col items-center justify-center gap-4;
-    @apply bg-background/80 backdrop-blur-sm;
-    @apply animate-in fade-in duration-200;
-  }
-
   .checkerboard-bg {
     @apply bg-[length:20px_20px];
     background-image: linear-gradient(
@@ -97,30 +82,5 @@
       linear-gradient(-45deg, rgba(50, 50, 50, 0.3) 25%, transparent 25%),
       linear-gradient(45deg, transparent 75%, rgba(50, 50, 50, 0.3) 75%),
       linear-gradient(-45deg, transparent 75%, rgba(50, 50, 50, 0.3) 75%);
-  }
-
-  .image-preview-container {
-    @apply h-full w-full relative rounded-lg overflow-hidden;
-    @apply bg-gradient-to-br from-accent/5 via-background to-muted/5;
-    @apply border border-border/50;
-    @apply transition-all duration-200;
-
-    img {
-      @apply w-full h-full object-contain;
-      @apply p-4;
-    }
-  }
-
-  .drop-zone {
-    @apply h-[60vh] w-full flex flex-col items-center justify-center;
-    @apply rounded-lg border-2 border-dashed border-muted-foreground/20;
-    @apply bg-gradient-to-br from-accent/5 via-background to-muted/5;
-    @apply transition-all duration-200;
-    @apply hover:border-primary/50 hover:bg-accent/5;
-  }
-
-  .drop-zone-active {
-    @apply border-primary bg-accent/10;
-    @apply scale-[0.99] transition-transform;
   }
 }

@@ -44,104 +44,23 @@ const applyMask = (
   const scaleY = height / mask.height;
 
   const maskData = new Float32Array(mask.data);
-  const enhancedMask = new Float32Array(maskData.length);
 
-  // First pass: Enhance edges
-  for (let y = 0; y < mask.height; y++) {
-    for (let x = 0; x < mask.width; x++) {
-      const idx = y * mask.width + x;
-      let maskValue = maskData[idx];
-
-      // Improved threshold logic
-      const threshold = settings.threshold;
-      const softness = settings.softness;
-      const edgeEnhancement = settings.edgeEnhancement;
-
-      // Apply threshold with improved softness
-      if (
-        maskValue > threshold - softness &&
-        maskValue < threshold + softness
-      ) {
-        maskValue = (maskValue - (threshold - softness)) / (2 * softness);
-      } else {
-        maskValue = maskValue > threshold ? 1 : 0;
-      }
-
-      // Enhanced edge detection
-      if (edgeEnhancement > 0 && maskValue > 0 && maskValue < 1) {
-        let neighbors = 0;
-        let neighborCount = 0;
-        let edgeDetected = false;
-
-        // Check surrounding pixels for edges
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-
-            const nx = x + dx;
-            const ny = y + dy;
-
-            if (nx >= 0 && nx < mask.width && ny >= 0 && ny < mask.height) {
-              const neighborValue = maskData[ny * mask.width + nx];
-              neighbors += neighborValue;
-              neighborCount++;
-
-              if (Math.abs(neighborValue - maskValue) > 0.3) {
-                edgeDetected = true;
-              }
-            }
-          }
-        }
-
-        if (edgeDetected) {
-          const avgNeighbor = neighbors / neighborCount;
-          const edgeFactor = edgeEnhancement * 0.5;
-          maskValue =
-            maskValue > avgNeighbor
-              ? Math.min(1, maskValue + edgeFactor)
-              : Math.max(0, maskValue - edgeFactor);
-        }
-      }
-
-      enhancedMask[idx] = maskValue;
-    }
-  }
-
-  // Second pass: Clean up isolated pixels
-  if (settings.cleanup) {
-    const cleanMask = new Float32Array(enhancedMask);
-    for (let y = 1; y < mask.height - 1; y++) {
-      for (let x = 1; x < mask.width - 1; x++) {
-        const idx = y * mask.width + x;
-        const current = enhancedMask[idx];
-
-        // Count different neighbors
-        let differentNeighbors = 0;
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const nidx = (y + dy) * mask.width + (x + dx);
-            if (Math.abs(enhancedMask[nidx] - current) > 0.5) {
-              differentNeighbors++;
-            }
-          }
-        }
-
-        // Remove isolated pixels
-        if (differentNeighbors >= 6) {
-          cleanMask[idx] = 1 - current;
-        }
-      }
-    }
-    enhancedMask.set(cleanMask);
-  }
-
-  // Apply the enhanced mask
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const maskX = Math.min(Math.floor(x / scaleX), mask.width - 1);
       const maskY = Math.min(Math.floor(y / scaleY), mask.height - 1);
-      const maskValue = enhancedMask[maskY * mask.width + maskX];
+      let maskValue = maskData[maskY * mask.width + maskX];
+
+      const threshold = settings.threshold;
+      const softness = settings.softness;
+
+      if (maskValue > threshold) {
+        // Calculate the influence of softness
+        const softnessEffect = Math.min((maskValue - threshold) / softness, 1);
+        maskValue = softnessEffect;
+      } else {
+        maskValue = 0;
+      }
 
       const index = (y * width + x) * 4;
       data[index + 3] = Math.round(255 * (1 - maskValue));
@@ -161,24 +80,23 @@ export const removeBackground = async (
       }
     };
 
-    updateProgress(0, "Loading AI model...");
+    updateProgress(20, "Loading AI model...");
     const model = await loadModel(settings.model);
-    updateProgress(20, "Model loaded, processing image...");
+    updateProgress(40, "Model loaded, processing image...");
 
     const image = await loadImageFromUrl(imageUrl);
     const canvas = await resizeImage(image);
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Failed to get canvas context");
 
-    updateProgress(40, "Analyzing image...");
+    updateProgress(60, "Analyzing image...");
 
     // Convert canvas to base64 for model input
     const base64Image = canvas.toDataURL("image/png");
-    const segmentation = await model(base64Image);
-    updateProgress(60, "Generating mask...");
+    const result = await model(base64Image);
+    updateProgress(70, "Generating mask...");
 
-    // Use generateMask to create the mask
-    const maskData = await generateMask(image, []); // Pass any points if needed
+    if (!result?.[0]?.mask) throw new Error("Segmentation failed");
 
     // Get the output canvas ready
     const outputCanvas = document.createElement("canvas");
@@ -197,11 +115,7 @@ export const removeBackground = async (
     );
 
     // Apply mask with settings
-    applyMask(outputImageData, maskData, {
-      ...settings,
-      threshold: settings.threshold, // Use the threshold directly
-    });
-
+    applyMask(outputImageData, result[0].mask, settings);
     outputCtx.putImageData(outputImageData, 0, 0);
     updateProgress(80, "Applying background color...");
 
@@ -219,6 +133,10 @@ export const removeBackground = async (
     }
 
     updateProgress(100, "Done!");
+
+    // Log the settings used for processing
+    console.log("Settings used for processing:", settings);
+
     return outputCanvas.toDataURL("image/png");
   } catch (error) {
     console.error("Error removing background:", error);
@@ -335,13 +253,13 @@ export const processImageWithPoints = async (
     ctx.drawImage(canvas, 0, 0);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-    applyMask(imageData, maskData, {
-      ...settings,
-      threshold: 1 - settings.threshold, // Invert threshold to keep foreground
-    });
+    applyMask(imageData, maskData, settings);
 
     ctx.putImageData(imageData, 0, 0);
     updateProgress(100, "Done!");
+
+    // Log the settings used for processing
+    console.log("Settings used for processing:", settings);
 
     return {
       imageUrl: outputCanvas.toDataURL("image/png"),

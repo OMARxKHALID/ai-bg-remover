@@ -10,14 +10,7 @@ import {
 } from "@/components/ui/tabs";
 import { ImagePreviewProps, PreviewTab } from "@/types";
 import ProgressBar from "@/components/ui/progress-bar";
-import {
-  Download,
-  Wand2,
-  Settings2,
-  X,
-  RotateCcw,
-  ArrowLeft,
-} from "lucide-react";
+import { Download, Wand2, Settings2, X, RotateCcw } from "lucide-react";
 import { exportImage } from "@/utils/imageProcessing";
 import { toast } from "sonner";
 import {
@@ -43,21 +36,6 @@ const defaultSettings: RemovalSettings = {
   preserveDetails: true,
   removeShades: true,
   finetuneMode: false,
-};
-
-const debounce = <T extends (...args: unknown[]) => void>(
-  func: T,
-  delay: number
-): ((...args: Parameters<T>) => void) => {
-  let timeoutId: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-      func(...args);
-    }, delay);
-  };
 };
 
 const ImagePreview: React.FC<ImagePreviewProps> = ({
@@ -111,17 +89,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
     <div className="relative space-y-3">
       <Card className="p-4 bg-gradient-to-r from-background to-accent/5">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              className="h-9 w-9 p-0"
-              title="Go back"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="sr-only">Refresh page</span>
-            </Button>
+          <div className="flex items-center">
             <button
               onClick={handleRefresh}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -301,133 +269,121 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
             </div>
 
             <div className="space-y-6">
-              <SettingsTabs defaultValue="model" className="w-full">
-                <SettingsTabsList className="grid w-full grid-cols-2">
-                  <SettingsTabsTrigger value="model">
-                    Model Settings
-                  </SettingsTabsTrigger>
-                </SettingsTabsList>
+              <div className="p-4 rounded-lg bg-muted/50">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Model</label>
+                  <Select
+                    value={settings.model}
+                    onValueChange={(value: ModelType) =>
+                      onSettingsChange({ ...settings, model: value })
+                    }
+                    disabled={isProcessing || isModelLoading}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Xenova/segformer-b2-finetuned-ade-512-512">
+                        Standard (Better Quality)
+                      </SelectItem>
+                      <SelectItem value="Xenova/segformer-b0-finetuned-ade-512-512">
+                        Basic (Faster)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-                <SettingsTabsContent value="model" className="mt-4 space-y-4">
-                  <div className="p-4 rounded-lg bg-muted/50">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Model</label>
-                      <Select
-                        value={settings.model}
-                        onValueChange={(value: ModelType) =>
-                          onSettingsChange({ ...settings, model: value })
-                        }
-                        disabled={isProcessing || isModelLoading}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Xenova/segformer-b2-finetuned-ade-512-512">
-                            Standard (Better Quality)
-                          </SelectItem>
-                          <SelectItem value="Xenova/segformer-b0-finetuned-ade-512-512">
-                            Basic (Faster)
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+              <div className="p-4 rounded-lg bg-muted/50 space-y-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <label className="text-sm font-medium">
+                        Fine-tune Mode
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        Enable for more precise control
+                      </p>
                     </div>
+                    <Switch
+                      checked={settings.finetuneMode}
+                      onCheckedChange={(checked) =>
+                        onSettingsChange({
+                          ...settings,
+                          finetuneMode: checked,
+                        })
+                      }
+                      disabled={isProcessing}
+                    />
                   </div>
 
-                  <div className="p-4 rounded-lg bg-muted/50 space-y-4">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <label className="text-sm font-medium">
-                            Fine-tune Mode
-                          </label>
-                          <p className="text-xs text-muted-foreground">
-                            Enable for more precise control
-                          </p>
-                        </div>
-                        <Switch
-                          checked={settings.finetuneMode}
-                          onCheckedChange={(checked) =>
-                            onSettingsChange({
-                              ...settings,
-                              finetuneMode: checked,
-                            })
-                          }
-                          disabled={isProcessing}
-                        />
-                      </div>
+                  <Separator />
 
-                      <Separator />
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <label className="text-sm font-medium">
-                            Threshold
-                          </label>
-                          <span className="text-sm text-muted-foreground">
-                            {settings.threshold.toFixed(2)}
-                          </span>
-                        </div>
-                        <Slider
-                          value={[settings.threshold]}
-                          onValueChange={([value]) =>
-                            onSettingsChange({ ...settings, threshold: value })
-                          }
-                          min={0.05}
-                          max={0.95}
-                          step={0.05}
-                          disabled={isProcessing}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <label className="text-sm font-medium">
-                            Edge Softness
-                          </label>
-                          <span className="text-sm text-muted-foreground">
-                            {settings.softness.toFixed(2)}
-                          </span>
-                        </div>
-                        <Slider
-                          value={[settings.softness]}
-                          onValueChange={([value]) =>
-                            onSettingsChange({ ...settings, softness: value })
-                          }
-                          min={0}
-                          max={1}
-                          step={0.05}
-                          disabled={isProcessing}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <label className="text-sm font-medium">
-                            Edge Enhancement
-                          </label>
-                          <span className="text-sm text-muted-foreground">
-                            {settings.edgeEnhancement.toFixed(2)}
-                          </span>
-                        </div>
-                        <Slider
-                          value={[settings.edgeEnhancement]}
-                          onValueChange={([value]) =>
-                            onSettingsChange({
-                              ...settings,
-                              edgeEnhancement: value,
-                            })
-                          }
-                          min={0}
-                          max={1}
-                          step={0.05}
-                          disabled={isProcessing}
-                        />
-                      </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <label className="text-sm font-medium">Threshold</label>
+                      <span className="text-sm text-muted-foreground">
+                        {settings.threshold.toFixed(2)}
+                      </span>
                     </div>
+                    <Slider
+                      value={[settings.threshold]}
+                      onValueChange={([value]) =>
+                        onSettingsChange({ ...settings, threshold: value })
+                      }
+                      min={0.05}
+                      max={0.95}
+                      step={0.05}
+                      disabled={isProcessing}
+                    />
                   </div>
-                </SettingsTabsContent>
-              </SettingsTabs>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <label className="text-sm font-medium">
+                        Edge Softness
+                      </label>
+                      <span className="text-sm text-muted-foreground">
+                        {settings.softness.toFixed(2)}
+                      </span>
+                    </div>
+                    <Slider
+                      value={[settings.softness]}
+                      onValueChange={([value]) =>
+                        onSettingsChange({ ...settings, softness: value })
+                      }
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      disabled={isProcessing}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <label className="text-sm font-medium">
+                        Edge Enhancement
+                      </label>
+                      <span className="text-sm text-muted-foreground">
+                        {settings.edgeEnhancement.toFixed(2)}
+                      </span>
+                    </div>
+                    <Slider
+                      value={[settings.edgeEnhancement]}
+                      onValueChange={([value]) =>
+                        onSettingsChange({
+                          ...settings,
+                          edgeEnhancement: value,
+                        })
+                      }
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      disabled={isProcessing}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </Card>

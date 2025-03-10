@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { UploadCloud, ImageIcon } from "lucide-react";
+import { UploadCloud, ImageIcon, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ImageUploaderProps } from "@/types";
@@ -72,62 +72,73 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   );
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-background to-accent/5">
-      <div
-        className={cn(
-          "relative min-h-[60vh] flex flex-col items-center justify-center p-8",
-          "border-2 border-dashed border-primary/20 rounded-xl m-1",
-          "transition-all duration-200",
-          dragActive && "border-primary/50 bg-primary/5 scale-[0.99]"
-        )}
-        onDragEnter={handleDrag}
-        onDragOver={handleDrag}
-        onDragLeave={handleDrag}
-        onDrop={handleDrop}
-      >
-        <div className="absolute inset-0 bg-grid-primary/5 [mask-image:linear-gradient(0deg,transparent,black)]" />
+    <div className="space-y-3">
+      <Card className="p-4 flex items-center justify-between bg-gradient-to-r from-background to-accent/5">
+        <div className="flex items-center gap-2">
+          <Upload className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Upload Image</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Drag & drop or click to upload
+        </p>
+      </Card>
+      <Card className="relative overflow-hidden bg-gradient-to-br from-background to-accent/5">
+        <div
+          className={cn(
+            "relative min-h-[40vh] sm:min-h-[60vh] flex flex-col items-center justify-center p-4 sm:p-8",
+            "border-2 border-dashed border-primary/20 rounded-xl m-1",
+            "transition-all duration-200",
+            dragActive && "border-primary/50 bg-primary/5 scale-[0.99]"
+          )}
+          onDragEnter={handleDrag}
+          onDragOver={handleDrag}
+          onDragLeave={handleDrag}
+          onDrop={handleDrop}
+        >
+          <div className="absolute inset-0 bg-grid-primary/5 [mask-image:linear-gradient(0deg,transparent,black)]" />
 
-        <div className="relative flex flex-col items-center gap-6 px-4 text-center max-w-md mx-auto">
-          <div
-            className={cn(
-              "p-4 rounded-full bg-primary/5",
-              "transition-transform duration-200",
-              dragActive ? "scale-110" : "scale-100"
-            )}
-          >
-            <UploadCloud className="h-12 w-12 text-primary/80" />
-          </div>
+          <div className="relative flex flex-col items-center gap-4 sm:gap-6 px-2 sm:px-4 text-center max-w-md mx-auto">
+            <div
+              className={cn(
+                "p-3 sm:p-4 rounded-full bg-primary/5",
+                "transition-transform duration-200",
+                dragActive ? "scale-110" : "scale-100"
+              )}
+            >
+              <UploadCloud className="h-8 w-8 sm:h-12 sm:w-12 text-primary/80" />
+            </div>
 
-          <div className="space-y-2">
-            <h3 className="text-2xl font-semibold">Drop your image here</h3>
-            <p className="text-sm text-muted-foreground">
-              Supports JPG, PNG and WEBP up to 10MB
-            </p>
-          </div>
+            <div className="space-y-1 sm:space-y-2">
+              <h3 className="text-xl sm:text-2xl font-semibold">
+                Drop your image here
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Supports JPG, PNG and WEBP up to 10MB
+              </p>
+            </div>
 
-          <div className="flex flex-col sm:flex-row w-full gap-3">
             <Button
               variant="outline"
               disabled={isProcessing}
               onClick={() => document.getElementById("file-upload")?.click()}
-              className="flex-1"
+              className="w-full sm:w-auto"
             >
               <ImageIcon className="mr-2 h-4 w-4" />
               Choose File
             </Button>
           </div>
-        </div>
 
-        <input
-          id="file-upload"
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleChange}
-          disabled={isProcessing}
-        />
-      </div>
-    </Card>
+          <input
+            id="file-upload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleChange}
+            disabled={isProcessing}
+          />
+        </div>
+      </Card>
+    </div>
   );
 };
 
